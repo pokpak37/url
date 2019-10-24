@@ -244,6 +244,38 @@ mapState func { visited, unvisited, params, frag, value } =
     -- /user/                 ==>  Nothing
 
 If there are multiple parsers that could succeed, the first one wins.
+
+**Note:** oneof is not work with path that have multi queries like example below.
+    
+    type Route
+      = TopicA (Maybe String)
+      | TopicB (Maybe String) (Maybe String)
+      
+    route : Parser (Route -> a) a
+    route =
+      oneOf
+        [ map TopicA   (s "topic" <?> Query.string "q")
+        , map TopicB   (s "topic" <?> Query.string "q" <?> Query.string "w" )
+        ]
+    
+    -- /topic/?q=wolf           ==>  Just (TopicA (Just "wolf"))
+    -- /topic/?q=wolf&w=white   ==>  Just (TopicA (Just "wolf"))
+    
+With this example you will always get the first element in oneOf, even if you swap the index of TopicA and TopicB in oneOf. Because it will always succeed.  
+When swap the index in oneOf.
+    type Route
+      = TopicA (Maybe String)
+      | TopicB (Maybe String) (Maybe String)
+      
+    route : Parser (Route -> a) a
+    route =
+      oneOf
+        [ map TopicB   (s "topic" <?> Query.string "q" <?> Query.string "w" )
+        , map TopicA   (s "topic" <?> Query.string "q")
+        ]
+    
+    -- /topic/?q=wolf           ==>  Just (TopicB (Just "wolf") Nothing)
+    -- /topic/?q=wolf&w=white   ==>  Just (TopicB (Just "wolf") (Just "white"))
 -}
 oneOf : List (Parser a b) -> Parser a b
 oneOf parsers =
