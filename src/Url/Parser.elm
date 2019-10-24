@@ -299,6 +299,33 @@ your blog website:
     -- /blog/42         ==>  Just (Post 42)
     -- /blog/42?q=wolf  ==>  Just (Post 42)
     -- /blog/42/wolf    ==>  Nothing
+
+Takenote: If you are in need of multiple queries, you can catch it with custom function that handle multiple maybe values.
+
+    type Blog
+    = BlogA 
+    | BlogB String
+    | BlogC String
+    | BlogD String String
+
+    blog : Parser (Route -> a) a
+    blog =
+      map mapToBlog (s "blog" <?> Query.string "q" <?> Query.string "w")
+        
+    mapToBlog : Maybe String -> Maybe String -> Blog
+    mapToBlog q w =
+      case ( q, w ) of
+        ( Just qq, Just ww ) ->
+            BlogD qq ww
+
+        ( Just qq, Nothing ) ->
+            BlogB qq
+            
+        ( Nothing, Just ww ) ->
+            BlogC ww
+            
+        ( Nothing, Nothing ) ->
+            BlogA
 -}
 questionMark : Parser a (query -> b) -> Query.Parser query -> Parser a b
 questionMark parser queryParser =
